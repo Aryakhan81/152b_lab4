@@ -23,57 +23,57 @@ int main() {
 	short int velX = -6;
 	short int velY = -8;
 
-    // Game controls
+	// Game controls
 	bool hasDied = false;
 	bool hasWon = false;
 	unsigned long int last_counter = *divided_clk;
 
 	// Main game loop
-    while (!hasDied && !hasWon) {
-        // TODO: Collision detection logic
+	while (!hasDied && !hasWon) {
+		// TODO: Collision detection logic
 
-        hasWon = !*reg0;
+		hasWon = !*reg0;
 
-        // TODO: Velocity change logic
-        unsigned long int counter = *divided_clk;
-        unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
+		// TODO: Velocity change logic
+		unsigned long int counter = *divided_clk;
+		unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
 		
-        // This should run 10 times per second
-        if (counts_increased) {
-        	*reg1 += velX;
-        	*reg2 += velY;
-        }
+		// This should run 10 times per second
+		if (counts_increased) {
+			*reg1 += velX;
+			*reg2 += velY;
+		}
 
-        if (*reg1 > 400) {
-        	velX = -1;
-        }
-        else if (*reg1 < 200) {
-        	velX = 1;
-        }
-        if (*reg2 > 400) {
-        	velY = -1;
-        }
-        else if (*reg2 < 200) {
-        	velY = 1;
-        }
+		if (*reg1 > 400) {
+			velX = -1;
+		}
+		else if (*reg1 < 200) {
+			velX = 1;
+		}
+		if (*reg2 > 400) {
+			velY = -1;
+		}
+		else if (*reg2 < 200) {
+			velY = 1;
+		}
+		
+		// Update ball positions with current velocity
+		//if((int)(*reg1) + velX < 0) velX = -velX;
+		//if((int)(*reg2) + velY < 0) velY = -velY;
 
-        // Update ball positions with current velocity
-        //if((int)(*reg1) + velX < 0) velX = -velX;
-        //if((int)(*reg2) + velY < 0) velY = -velY;
 
+		hasDied = *reg2 > 450;
+	}
 
-        hasDied = *reg2 > 450;
-    }
-
-    // Lose logic
-    if (hasDied) {
-
-    }
-
-    // Win logic
-    if (hasWon) {
-
-    }
-
-    return 0;
+	// Lose logic
+	if (hasDied) {
+		
+	}
+	
+	// Win logic
+	if (hasWon) {
+		
+	}
+	
+	return 0;
 }
