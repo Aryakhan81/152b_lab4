@@ -14,19 +14,19 @@ int main() {
 	Xuint32* divide_const = baseaddr_p_tc + 0;
 	Xuint32* divided_clk  = baseaddr_p_tc + 1;
 
-    *reg0 = 0xFFFFFFFF; // Initially, all bricks are set
-    *reg1 = 320;        // Set initial ball x to halfway through the screen
-    *reg2 = 320;        // Set initial ball y near the bottom
-    *reg3 = 320;        // Set initial paddle x to halfway through the screen
-    *divide_const = 10000000; // 100MHz / 10000000 = divided_clk increases by 10 per second
+	*reg0 = 0xFFFFFFFF; // Initially, all bricks are set
+	*reg1 = 320;        // Set initial ball x to halfway through the screen
+	*reg2 = 320;        // Set initial ball y near the bottom
+	*reg3 = 320;        // Set initial paddle x to halfway through the screen
+	*divide_const = 10000000; // 100MHz / 10000000 = divided_clk increases by 10 per second
 
-    short int velX = -6;
-    short int velY = -8;
+	short int velX = -6;
+	short int velY = -8;
 
     // Game controls
-    bool hasDied = false;
-    bool hasWon = false;
-    unsigned long int last_counter = *divided_clk;
+	bool hasDied = false;
+	bool hasWon = false;
+	unsigned long int last_counter = *divided_clk;
 
 	// Main game loop
     while (!hasDied && !hasWon) {
