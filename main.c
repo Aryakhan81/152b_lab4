@@ -27,6 +27,8 @@ int main() {
     bool hasDied = false;
     bool hasWon = false;
     unsigned long int last_counter = *divided_clk;
+
+	// Main game loop
     while (!hasDied && !hasWon) {
         // TODO: Collision detection logic
 
@@ -35,6 +37,7 @@ int main() {
         // TODO: Velocity change logic
         unsigned long int counter = *divided_clk;
         unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
+		
         // This should run 10 times per second
         if (counts_increased) {
         	*reg1 += velX;
@@ -59,7 +62,7 @@ int main() {
         //if((int)(*reg2) + velY < 0) velY = -velY;
 
 
-        //hasDied = *reg2 > 450;
+        hasDied = *reg2 > 450;
     }
 
     // Lose logic
