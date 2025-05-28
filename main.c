@@ -10,9 +10,12 @@
 #define BALL_HEIGHT BALL_WIDTH
 #define INTERSECTION_CHECK_DEPTH 10
 
+#define BALL_MAX_SPEED 10
+#define BALL_PADDLE_BOUNCE_SPEED_CHANGE 3
+
 #define PADDLE_HEIGHT 10
 #define PADDLE_WIDTH 120
-#define PADDLE_SPEED 5
+#define PADDLE_SPEED 6
 
 #define SCREEN_HEIGHT 480
 #define SCREEN_WIDTH 640
@@ -26,6 +29,14 @@ float max(float a, float b) {
 
 float min(float a, float b) {
 	return a < b ? a : b;
+}
+
+float clamp(float x, float a, float b) {
+	return x < a ? a : x > b ? b : x;
+}
+
+int sign(float x) {
+	 return x < 0 ? -1 : x > 0 ? 1 : 0;
 }
 
 int main() {
@@ -42,21 +53,28 @@ int main() {
 	XGpio_SetDataDirection(&xgpio, 1, 0x0F);
 	u32 btn;
 
+	float ballX;
+	float ballY;
+	float velX;
+	float velY;
+	float paddleX;
+	float unit;
+
 setup:
 	*reg0 = 0xFFFFFFFF; // Initially, all bricks are set
-	float ballX = 320;
-	float ballY = 320;
+
+	ballX = 320;
+	ballY = 320;
 	*reg1 = ballX;        // Set initial ball x to halfway through the screen
 	*reg2 = ballY;        // Set initial ball y near the bottom
-	float paddleX = 320;
+	paddleX = 320;
 	*reg3 = paddleX;        // Set initial paddle x to halfway through the screen
 	//*divide_const = 10000000; // 100MHz / 10000000 = divided_clk increases by 10 per second
-	*divide_const = 2000000;
-    
-    float unit = 2000000 / *divide_const;
+	*divide_const = 500000;
+    unit = (float)*divide_const / 2000000;
 
-	float velX = -4 * unit;
-	float velY = -4 * unit;
+	velX = -3 * unit;
+	velY = -5 * unit;
 
 	// Game controls
 	bool hasDied = false;
@@ -90,44 +108,48 @@ setup:
 			}
 			// right edge of brick
 			if (brickY <= ballY + BALL_HEIGHT && ballY <= brickY + BRICK_HEIGHT && ballX <= brickX + BRICK_WIDTH && ballX >= brickX + BRICK_WIDTH - INTERSECTION_CHECK_DEPTH) {
-                destroyed = true;
-                velX = abs(velX);
-            }
+				destroyed = true;
+				velX = abs(velX);
+			}
 
-            if (destroyed) {
-                *reg0 &= ~(1 << i);
-            }
-        }
-        // paddle collision
-        if (paddleX <= ballX + BALL_WIDTH && ballX <= paddleX + PADDLE_WIDTH && ballY + BALL_HEIGHT >= paddleY && ballY <= paddleY + PADDLE_HEIGHT) {
-            velY = -abs(velY);
-            // TODO make velX bounce in a way that depends on where on the paddle the collision happened
-            // (we might want to use floats for velX and velY instead)
-        }
+			if (destroyed) {
+				*reg0 &= ~(1 << i);
+			}
+		}
+		// paddle collision
+		if (velY > 0 && paddleX <= ballX + BALL_WIDTH && ballX <= paddleX + PADDLE_WIDTH && ballY + BALL_HEIGHT >= paddleY && ballY <= paddleY + PADDLE_HEIGHT) {
+			velY = -abs(velY);
+			// Make the ball bounce in a way that depends on where on the paddle the collision happened.
+			// This ranges from -1 on a left-edge bounce to 1 on a right-edge bounce
+			float relativeBouncePosition = clamp(ballX + BALL_WIDTH / 2 - paddleX, 0, PADDLE_WIDTH) / PADDLE_WIDTH * 2 - 1;
+			velX = velX + relativeBouncePosition * BALL_PADDLE_BOUNCE_SPEED_CHANGE;
+			velX = clamp(velX, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+			velX *= unit;
+		}
 
-        hasWon = !*reg0;
+		hasWon = !*reg0;
 
-        unsigned long int counter = *divided_clk;
-        unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
-        last_counter = counter;
+		unsigned long int counter = *divided_clk;
+		unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
+		last_counter = counter;
 
-        btn = XGpio_DiscreteRead(&xgpio, 1);
+		btn = XGpio_DiscreteRead(&xgpio, 1);
 
-        // Logic for applying velocity
-        // This should run 10 times per second
-        if (counts_increased) {
-            ballX += velX;
-            ballY += velY;
+		// Logic for applying velocity
+		// This should run 10 times per second
+		if (counts_increased) {
+			ballX += velX;
+			ballY += velY;
 
-            if (btn & 0b0100) {
-                paddleX = min(SCREEN_WIDTH - PADDLE_WIDTH, paddleX + PADDLE_SPEED);
-            }
-            if (btn & 0b0010) {
-                paddleX = max(0, paddleX - PADDLE_SPEED);
-            }
-        }
+			if (btn & 0b0100) {
+				paddleX = min(SCREEN_WIDTH - PADDLE_WIDTH, paddleX + (PADDLE_SPEED * unit));
+			}
+			if (btn & 0b0010) {
+				paddleX = max(0, paddleX - (PADDLE_SPEED * unit));
+			}
+		}
 
-        if (ballX > SCREEN_WIDTH - BALL_WIDTH) {
+		if (ballX > SCREEN_WIDTH - BALL_WIDTH) {
 			ballX = SCREEN_WIDTH - BALL_WIDTH;
 			velX = -abs(velX);
 		}
