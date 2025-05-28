@@ -52,9 +52,11 @@ setup:
 	*reg3 = paddleX;        // Set initial paddle x to halfway through the screen
 	//*divide_const = 10000000; // 100MHz / 10000000 = divided_clk increases by 10 per second
 	*divide_const = 2000000;
+    
+    float unit = 2000000 / *divide_const;
 
-	float velX = -4;
-	float velY = -4;
+	float velX = -4 * unit;
+	float velY = -4 * unit;
 
 	// Game controls
 	bool hasDied = false;
@@ -88,44 +90,44 @@ setup:
 			}
 			// right edge of brick
 			if (brickY <= ballY + BALL_HEIGHT && ballY <= brickY + BRICK_HEIGHT && ballX <= brickX + BRICK_WIDTH && ballX >= brickX + BRICK_WIDTH - INTERSECTION_CHECK_DEPTH) {
-				destroyed = true;
-				velX = abs(velX);
-			}
+                destroyed = true;
+                velX = abs(velX);
+            }
 
-			if (destroyed) {
-				*reg0 &= ~(1 << i);
-			}
-		}
-		// paddle collision
-		if (paddleX <= ballX + BALL_WIDTH && ballX <= paddleX + PADDLE_WIDTH && ballY + BALL_HEIGHT >= paddleY && ballY <= paddleY + PADDLE_HEIGHT) {
-			velY = -abs(velY);
-			// TODO make velX bounce in a way that depends on where on the paddle the collision happened
-			// (we might want to use floats for velX and velY instead)
-		}
+            if (destroyed) {
+                *reg0 &= ~(1 << i);
+            }
+        }
+        // paddle collision
+        if (paddleX <= ballX + BALL_WIDTH && ballX <= paddleX + PADDLE_WIDTH && ballY + BALL_HEIGHT >= paddleY && ballY <= paddleY + PADDLE_HEIGHT) {
+            velY = -abs(velY);
+            // TODO make velX bounce in a way that depends on where on the paddle the collision happened
+            // (we might want to use floats for velX and velY instead)
+        }
 
-		hasWon = !*reg0;
+        hasWon = !*reg0;
 
-		unsigned long int counter = *divided_clk;
-		unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
-		last_counter = counter;
+        unsigned long int counter = *divided_clk;
+        unsigned long int counts_increased = counter - last_counter; // this should be correct even if divided_clk has overflowed
+        last_counter = counter;
 
-		btn = XGpio_DiscreteRead(&xgpio, 1);
+        btn = XGpio_DiscreteRead(&xgpio, 1);
 
-		// Logic for applying velocity
-		// This should run 10 times per second
-		if (counts_increased) {
-			ballX += velX;
-			ballY += velY;
+        // Logic for applying velocity
+        // This should run 10 times per second
+        if (counts_increased) {
+            ballX += velX;
+            ballY += velY;
 
-			if (btn & 0b0100) {
-				paddleX = min(SCREEN_WIDTH - PADDLE_WIDTH, paddleX + PADDLE_SPEED);
-			}
-			if (btn & 0b0010) {
-				paddleX = max(0, paddleX - PADDLE_SPEED);
-			}
-		}
+            if (btn & 0b0100) {
+                paddleX = min(SCREEN_WIDTH - PADDLE_WIDTH, paddleX + PADDLE_SPEED);
+            }
+            if (btn & 0b0010) {
+                paddleX = max(0, paddleX - PADDLE_SPEED);
+            }
+        }
 
-		if (ballX > SCREEN_WIDTH - BALL_WIDTH) {
+        if (ballX > SCREEN_WIDTH - BALL_WIDTH) {
 			ballX = SCREEN_WIDTH - BALL_WIDTH;
 			velX = -abs(velX);
 		}
