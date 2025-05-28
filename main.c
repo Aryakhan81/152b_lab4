@@ -42,7 +42,7 @@ int main() {
 	XGpio_SetDataDirection(&xgpio, 1, 0x0F);
 	u32 btn;
 
-
+setup:
 	*reg0 = 0xFFFFFFFF; // Initially, all bricks are set
 	float ballX = 320;
 	float ballY = 320;
@@ -148,14 +148,12 @@ int main() {
 		*reg3 = (int)paddleX;
 	}
 
-	// Lose logic
-	if (hasDied) {
-
-	}
-
-	// Win logic
-	if (hasWon) {
-
+	// Win or lose logic
+	while (hasDied || hasWon) {
+        btn = XGpio_DiscreteRead(&xgpio, 1);
+        if (btn & 0b0100) {
+            goto setup;
+        }
 	}
 
 	return 0;
