@@ -150,10 +150,10 @@ setup:
 
 	// Win or lose logic
 	while (hasDied || hasWon) {
-        btn = XGpio_DiscreteRead(&xgpio, 1);
-        if (btn & 0b0100) {
-            goto setup;
-        }
+		btn = XGpio_DiscreteRead(&xgpio, 1);
+		if (btn & 0b1001) {
+			goto setup;
+		}
 	}
 
 	return 0;
